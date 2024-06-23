@@ -10,10 +10,10 @@
 import PyPDF2
 import re
 
-reader_3000 = PyPDF2.PdfReader('./oxford_3000.pdf')
+reader_3000 = PyPDF2.PdfReader('./oxford_3000/oxford_3000.pdf')
 
 i=0
-with open('./oxford_words.txt', 'w', encoding='utf-8') as file:
+with open('./oxford_3000/oxford_words.txt', 'w', encoding='utf-8') as file:
     for txt in reader_3000.pages:
         page = re.sub(r'(A1)|(A2)|(B1)|(B2)', '\n', txt.extract_text())
         for p in page.split('\n'):
