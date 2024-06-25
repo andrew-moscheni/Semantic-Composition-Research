@@ -10,7 +10,6 @@ import pickle
 import random
 import time
 import json
-import urllib
 
 from concurrent.futures import ThreadPoolExecutor
 from itertools import cycle
@@ -37,23 +36,23 @@ directory_names = ['mw', 'dict_dot_com', 'cambridge', 'online_api', 'collins']
 
 # make the word list and the list of working proxies (to be used later)
 def generate_proxies():
-    proxy_list = []
+    print('Generating proxies...')
+    proxy_list = set()
     for site in proxy_sites:
         response = requests.get(site)
         soup = BeautifulSoup(response.text)
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:80.0) Gecko/20100101 Firefox/80.0'}
         # go through the rows of the table
         for row in soup.select('.table.table-striped.table-bordered tbody tr'):
             # get the proxy
-            ip, port = row.select('td')[0:1]
+            ip, port = row.select('td')[0:2]
             schematic = 'https' if row.select('td')[6] == 'yes' else 'http'
-            proxy={schematic:schematic+'://'+ip+port}
+            proxy={schematic:schematic+'://'+ip.text+':'+port.text}
             # test it
-            try:
-                urllib.urlopen('https://www.nhl.com/', proxies=proxy)
-            except IOError:
-                continue
-            else:
-                proxy_list.append(proxy)
+            check = requests.get('https://www.nhl.com/', headers=headers, proxies=proxy)
+            if check.status_code == 200:
+                proxy_list.add(proxy)
+    print('Finished generating proxies!')
     return proxy_list
 
 word_list = open('./oxford_3000/oxford_words.txt', 'r').read().split('\n')
