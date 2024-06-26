@@ -14,11 +14,10 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 from itertools import cycle
 from bs4 import BeautifulSoup
+from termcolor import cprint
 
 
 # GLOBAL VARIABLES
-MAX_PAGES_PER_MIN = 5
-MAX_PAGES_BEFORE_RESET = 20
 proxy_sites = [
     'https://free-proxy-list.net/uk-proxy.html',
     'https://www.sslproxies.org/',
@@ -32,58 +31,37 @@ url_stems = [
     'https://www.collinsdictionary.com/us/dictionary/english/',  # Collins English Dictionary
     'https://api.dictionaryapi.dev/api/v2/entries/en/'           # Free Online Dictionary API
 ]
+colors = ['red', 'cyan', 'green', 'yellow', 'magenta']
 directory_names = ['mw', 'dict_dot_com', 'cambridge', 'online_api', 'collins']
 
 # make the word list and the list of working proxies (to be used later)
-def generate_proxies():
-    print('Generating proxies...')
-    proxy_list = set()
-    for site in proxy_sites:
-        response = requests.get(site)
-        soup = BeautifulSoup(response.text)
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:80.0) Gecko/20100101 Firefox/80.0'}
-        # go through the rows of the table
-        for row in soup.select('.table.table-striped.table-bordered tbody tr'):
-            # get the proxy
-            ip, port = row.select('td')[0:2]
-            schematic = 'https' if row.select('td')[6] == 'yes' else 'http'
-            proxy={schematic:schematic+'://'+ip.text+':'+port.text}
-            # test it
-            check = requests.get('https://www.nhl.com/', headers=headers, proxies=proxy)
-            if check.status_code == 200:
-                proxy_list.add(proxy)
-    print('Finished generating proxies!')
-    return proxy_list
-
 word_list = open('./oxford_3000/oxford_words.txt', 'r').read().split('\n')
+proxies = [x[:-1] for x in requests.get('https://pastebin.com/raw/VJwVkqRT').text.split('\n')[2:]]
 proxy_cycle = cycle(generate_proxies())
 
 
 # declare fetch_html function (to be used by multiple threads)
 def fetch_html(index):
-    print(f'Processing {directory_names[index]}...')
-    # randomization variables
-    total_pages_before_reset, page_counter_before_reset = 0, 0
-    time_used_before_reset, total_time_used_before_reset = 0, 0
+    cprint(f'Processing {directory_names[index]}...', colors[index])
     
     # for every word get the raw data (JSON or HTML) and store it in its correct directory
     for word in word_list:
         is_not_api = index < 4
         url = url_stems[index]+word
-        directory = './'+directory_names[index]+'_pages'
+        directory = './'+directory_names[index]+'_raw_data'
         filename = word + '.pickle' if is_not_api else word + '.json'
         mode = 'wb' if is_not_api else 'w'
         # cycle through the proxy list
         proxy = next(proxy_cycle)
-
-        response = requests.get(url, proxies=proxy)
-        if response.status_code > 229:
+        # get the HTML and extract it from the response
+        response = requests.get(url, proxies={'http':proxy})
+        if response.status_code != 200:
             raise RuntimeError(f'HTTP {response.status_code} Error.')
-
         raw_data = response.text if is_not_api else response.json()
+        # store them all in separate directories
         with open(directory + '/' + filename, mode) as file:
             pickle.dump(raw_data, file) if is_not_api else json.dump(raw_data, file)
-    print(f'Finished processing {directory_names[index]}!')
+    cprint(f'Finished processing {directory_names[index]}!', colors[index])
 
 
 # pretty printing -- converts seconds to hours, minutes, seconds
