@@ -4,7 +4,6 @@
     <OXFORD 3000> words list.
 """
 
-# packages/dependencies here
 import requests
 import pickle
 import random
@@ -17,7 +16,6 @@ from bs4 import BeautifulSoup
 from termcolor import cprint
 
 
-# GLOBAL VARIABLES
 proxy_sites = [
     'https://free-proxy-list.net/uk-proxy.html',
     'https://www.sslproxies.org/',
@@ -46,19 +44,22 @@ def fetch_html(index):
     
     # for every word get the raw data (JSON or HTML) and store it in its correct directory
     for word in word_list:
+
         is_not_api = index < 4
         url = url_stems[index]+word
         directory = './'+directory_names[index]+'_raw_data'
         filename = word + '.pickle' if is_not_api else word + '.json'
         mode = 'wb' if is_not_api else 'w'
+
         # cycle through the proxy list
         proxy = next(proxy_cycle)
+
         # get the HTML and extract it from the response
         response = requests.get(url, proxies={'http':proxy})
         if response.status_code != 200:
             raise RuntimeError(f'HTTP {response.status_code} Error.')
+
         raw_data = response.text if is_not_api else response.json()
-        # store them all in separate directories
         with open(directory + '/' + filename, mode) as file:
             pickle.dump(raw_data, file) if is_not_api else json.dump(raw_data, file)
     cprint(f'Finished processing {directory_names[index]}!', colors[index])
@@ -76,5 +77,5 @@ if __name__ == '__main__':
     t1 = time.time()
     with ThreadPoolExecutor(max_workers=len(url_stems)) as executor:
         executor.map(fetch_html, range(len(url_stems)))
-    print(f'Execution completed successfully in {seconds_conversion(time.time()-t1)} \
+    print(f'Downloading completed successfully in {seconds_conversion(time.time()-t1)} \
         (hours:minutes:seconds)')
