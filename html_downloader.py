@@ -29,15 +29,27 @@ url_stems = [
     'https://www.thefreedictionary.com/',                        # Free Dictionary
     'https://api.dictionaryapi.dev/api/v2/entries/en/'           # Free Online Dictionary API
 ]
+user_agents = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 Edg/123.0.2420.81',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 OPR/109.0.0.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 14.4; rv:124.0) Gecko/20100101 Firefox/124.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 OPR/109.0.0.0',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (X11; Linux i686; rv:124.0) Gecko/20100101 Firefox/124.0'
+]
 colors = ['red', 'cyan', 'green', 'yellow', 'magenta']
 directory_names = ['mw', 'dict_dot_com', 'cambridge', 'free', 'online_api']
-headers={'User-Agent': 'Mozilla/5.0 (Windows Phone 10.0; Android 6.0.1; Microsoft; RM-1152) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Mobile Safari/537.36 Edge/15.15254'}
 
 # declare fetch_html function (to be used by multiple threads)
 def fetch_html(index):
     cprint(f'Processing {directory_names[index]}...', colors[index])
     proxies = [x[:-1] for x in requests.get('https://pastebin.com/raw/VJwVkqRT').text.split('\n')[2:]]
     proxy_cycle = cycle(random.sample(proxies, len(proxies)))
+    agents_cycle = cycle(random.sample(user_agents, len(user_agents)))
     
     # for every word get the raw data (JSON or HTML) and store it in its correct directory
     with open('./oxford_3000/oxford_words.txt','r', encoding='utf-8') as f:
@@ -53,9 +65,10 @@ def fetch_html(index):
 
             # cycle through the proxy list
             proxy = next(proxy_cycle)
+            user = next(agents_cycle)
 
             # get the HTML and extract it from the response
-            response = requests.get(url, headers=headers, proxies={'http':proxy})
+            response = requests.get(url, headers={'User-Agent':user}, proxies={'http':proxy})
             if response.status_code != 200:
                 if response.status_code == 404:
                     continue
@@ -68,7 +81,7 @@ def fetch_html(index):
                     pickle.dump(raw_data, file)
                 else:
                     json.dump(raw_data, file)
-            time.sleep(random.uniform(1,6))
+            time.sleep(random.uniform(1,3))
     cprint(f'Finished processing {directory_names[index]}!', colors[index])
 
 
