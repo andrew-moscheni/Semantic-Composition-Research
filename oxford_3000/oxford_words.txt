@@ -372,8 +372,7 @@ camp
 campaign
 camping
 campus
-can1
-can2
+can
 cancel
 cancer
 candidate
@@ -778,7 +777,7 @@ district
 divide
 division
 divorced
-do1
+do
 doctor
 document
 documentary
@@ -789,7 +788,6 @@ dominate
 donate
 door
 double
-adv.
 doubt
 down
 download
@@ -1478,8 +1476,7 @@ language
 laptop
 large
 largely
-last1
-last1
+last
 late
 later
 latest
@@ -1518,17 +1515,14 @@ letter
 level
 library
 licence
-lie1
-lie2
+lie
 life
 lifestyle
 lift
 light
-adj.
 light
 like
 like
-n.
 likely
 limit
 limited
@@ -1542,8 +1536,7 @@ listen
 listener
 literature
 little
-live1
-live2
+live
 lively
 living
 load
@@ -1607,7 +1600,6 @@ mass
 massive
 master
 match
-v.
 matching
 material
 mathematics
