@@ -1,14 +1,16 @@
 # import dependencies
 import pandas as pd
 import os
+import pickle
 
 from bs4 import BeautifulSoup
 from pattern.text.en import singularize
 
 directory = './raw_data/mw_raw_data'
 
+print('Processing MW words...')
 for filename in os.listdir(directory):
-    data = pickle.load(open(os.path.join(directory, filename)))
+    data = pickle.load(open(os.path.join(directory, filename), 'rb'))
     # get words, definitions, and part of speeches of words
     def_soup = BeautifulSoup(data, 'html.parser')
 
@@ -23,27 +25,33 @@ for filename in os.listdir(directory):
     pos = [n[1] for n in new_list]
 
     # make the definitions into text, combining forms
+    variant = False
     formatted_defs = []
     for r in new_list:
         for d in r[2]:
             def_text = [d2.select('.unText') if d2.select('.unText') and not d2.select('.dtText')
                         else d2.select('.dtText') for d2 in d]
-            def_string = ''.join([d2[0].text for d2 in def_text])
-            formatted_defs.append([r[0], r[1], def_string])
+            try:
+                def_string = ''.join([d2[0].text for d2 in def_text])
+                formatted_defs.append([r[0], r[1], def_string])
+            except:
+                variant=True
 
     # make plural nouns singular if necessary
+    word = filename.split('.')[0]
     single = singularize(word) if word[-1].islower() else word
     single_wrd = single if (word not in words) and (single in words) else word
 
     ret_word_list, ret_pos_list, ret_dfn_list = [], [], []
     if single_wrd in words:  # if the word matches, perfect!
-        subset = [s for s in formatted_defs if s[0] == single_wrd]
-        ret_word_list = [s[0] for s in subset]
-        ret_pos_list = [s[1] for s in subset]
-        ret_dfn_list = [s[2] for s in subset]
+        if not variant:
+            subset = [s for s in formatted_defs if s[0] == single_wrd]
+            ret_word_list = [s[0] for s in subset]
+            ret_pos_list = [s[1] for s in subset]
+            ret_dfn_list = [s[2] for s in subset]
 
         # variant spelling of word
-        if not ret_dfn_list and not ret_pos_list:
+        if not ret_dfn_list and not ret_pos_list or variant:
             dfn_list = [ct.select('.cxl-ref') for ct in container]
             ret_dfn_list = [x.text for y in dfn_list for x in y]
             ret_pos_list = ['variant'] * len(ret_dfn_list)
@@ -100,7 +108,14 @@ for filename in os.listdir(directory):
         ret_dfn_list = [ret_dfn_list[g] for g in groupings[container_index]]
         ret_word_list = ret_word_list * len(ret_dfn_list)
         ret_pos_list = ret_pos_list * len(ret_dfn_list)
-    print(ret_word_list)
-    print(ret_pos_list)
-    print(ret_dfn_list)
-    break
+
+    ret_dfn_list = [r.lstrip('\"').rstrip('\"').lstrip(': ') for r in ret_dfn_list]
+    # make a DataFrame and then append it to pre-existing file
+    df = pd.DataFrame({
+        'word': ret_word_list,
+        'pos': ret_pos_list,
+        'dfn': ret_dfn_list
+    })
+
+    df.to_csv('./mw_words_3000.csv', mode='a', index=False, header=False)
+print('Finished parsing all of the MW words!')
