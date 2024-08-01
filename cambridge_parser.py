@@ -18,7 +18,6 @@ for filename in os.listdir(directory):
     for block_html in soup.select('.pr.entry-body__el'):
         word = block_html.select('.hw.dhw')[0].text
 
-
         pos = block_html.select('.pos.dpos')[0].text if block_html.select('.pos.dpos') else 'N/A'
         
         def_html = block_html.select('.def.ddef_d.db')
