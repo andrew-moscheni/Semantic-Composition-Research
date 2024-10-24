@@ -4,7 +4,7 @@ import pandas as pd
 import os
 
 # name of the directory the files are under
-directory = './raw_data/online_api_raw_data'
+directory = './data_files/raw_data/online_api_raw_data'
 
 # filter through every file and extract the information from the JSON file
 for filename in os.listdir(directory):

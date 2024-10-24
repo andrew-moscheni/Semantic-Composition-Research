@@ -6,7 +6,7 @@ import random
 
 from bs4 import BeautifulSoup
 
-directory = './raw_data/cambridge_raw_data'
+directory = './data_files/raw_data/cambridge_raw_data'
 
 print('Processing Cambridge words...')
 for filename in os.listdir(directory):

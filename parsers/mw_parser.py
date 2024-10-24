@@ -6,7 +6,7 @@ import pickle
 from bs4 import BeautifulSoup
 from pattern.text.en import singularize
 
-directory = './raw_data/mw_raw_data'
+directory = './data_files/raw_data/mw_raw_data'
 
 print('Processing MW words...')
 for filename in os.listdir(directory):

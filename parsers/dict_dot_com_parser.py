@@ -6,7 +6,7 @@ import re
 
 from bs4 import BeautifulSoup
 
-directory = './raw_data/dict_dot_com_raw_data'
+directory = './data_files/raw_data/dict_dot_com_raw_data'
 
 print('Processing Dictionary.com Words...')
 for filename in os.listdir(directory):

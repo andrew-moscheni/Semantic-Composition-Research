@@ -6,7 +6,7 @@ import random
 
 from bs4 import BeautifulSoup
 
-directory = './raw_data/free_raw_data'
+directory = './data_files/raw_data/free_raw_data'
 filename = 'a.pickle'
 data = pickle.load(open(os.path.join(directory, filename), 'rb'))
 soup = BeautifulSoup(data, 'html.parser')
