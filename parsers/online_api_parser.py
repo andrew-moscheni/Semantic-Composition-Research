@@ -21,4 +21,4 @@ for filename in os.listdir(directory):
                 'pos': [pos],
                 'dfn': [dfn]
             })
-            df.to_csv('./oxford_3000_dfns.csv', mode='a', index=False, header=False)
+            df.to_csv('./online_api_words_3000.csv', mode='a', index=False, header=False)
