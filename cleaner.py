@@ -2,6 +2,33 @@
 import pandas as pd
 import re
 import os
+from textblob import TextBlob
+
+def clean_definition(definition):
+    cleaned = definition
+    # remove unnecessary punctuation at the end of the file [ALL]
+    cleaned = s[-1] if s.endswith((':','.')) else s
+    # removes any instance that is just 'Also called' [free]
+    if cleaned == 'Also called':
+        return ''
+    # removes any instance of (= ) [Cambridge]
+    cleaned =  re.sub(r'\(=\w+\)','',s)
+    # removes one-word capitalized string list at beginning of a definition [Dict.com]
+    cleaned = re.sub(r'^ ([A-Z][a-zA-Z]*(, )?)+\.','',s)
+    # remove sense ##, entry ##, (see ...) [MW words]
+    cleaned =  re.sub(r'sense \d+|entry \d+|\(see [\w\s]+\)','',s)
+    # Remove 'Compare ...' at the end of a definition after the definition [online API]
+    cleaned = re.sub(r'(?:[^.]*\.\s*)(Compare[^.]*\.)',r'\1',s)
+    # remove unnececessary spaces from the beginning and end after substitution
+    cleaned = cleaned.lstrip(' ').rstrip(' ')
+    # now run every element through a spell checker
+    blob = TextBlob(cleaned)
+    cleaned = b.correct()
+
+    # return the value once it has been cleaned and corrected
+    return cleaned
+
+
 
 # do a set of cleaning operations on ALL dictionaries to make cleaning more efficient
 print('Cleaning data...')
@@ -17,19 +44,11 @@ for filename in os.listdir(src_directory):
     # ensures the word is not a prefix or a suffix
     df = df[not df['word'].endswith('-') or not df['word'].startswith('-')]
 
-    # remove unnecessary punctuation at the end of the file [ALL]
-    df['dfn'] = df['dfn'].str.lstrip(' ').map(lambda s: s[-1] if s.endswith((':','.')) else s)
-    # removes any instance that is just 'Also called' [free]
-    df = df[df['dfn']!='Also called']
-    # removes any instance of (= ) [Cambridge]
-    df['dfn'] = df['dfn'].str.map(lambda s: re.sub(r'\(=\w+\)','',s))
-    # removes one-word capitalized string list at beginning of a definition [Dict.com]
-    df['dfn'] = df['dfn'].str.map(lambda s: re.sub(r'^ ([A-Z][a-zA-Z]*(, )?)+\.','',s))
-    # remove sense ##, entry ##, (see ...) [MW words]
-    df['dfn'] = df['dfn'].str.map(lambda s: re.sub(r'sense \d+|entry \d+|\(see [\w\s]+\)','',s))
-    # Remove 'Compare ...' at the end of a definition after the definition [online API]
-    df['dfn'] = df['dfn'].str.map(lambda s: re.sub(r'(?:[^.]*\.\s*)(Compare[^.]*\.)',r'\1',s))
-    # removes empty instances from the dataframe [ALL]
+    # apply the function from above on all the definitions of the dataframe and streamline it to ensure
+    # we are doing this efficiently
+    df['dfn'] = df['dfn'].apply(clean_definition)
+
+    # removes empty instances from the dataframe after the function is applied to each element
     df = df[df['dfn']!='']
 
     # load the cleaned files into a separate directory
