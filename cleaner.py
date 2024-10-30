@@ -7,13 +7,11 @@ from textblob import TextBlob
 # function used in the apply method to streamline the code and avoid repetitive iterations through
 # the dataframe
 def clean_definition(definition):
-    # remove unnecessary punctuation at the end of the file [ALL]
-    cleaned = definition[-1] if definition.endswith((':','.')) else definition
     # removes any instance that is just 'Also called' [free]
-    if cleaned == 'Also called':
+    if definition == 'Also called':
         return ''
     # removes any instance of (= ) [Cambridge]
-    cleaned =  re.sub(r'\(=\w+\)','',cleaned)
+    cleaned =  re.sub(r'\(=\w+\)','',definition)
     # removes one-word capitalized string list at beginning of a definition [Dict.com]
     cleaned = re.sub(r'^ ([A-Z][a-zA-Z]*(, )?)+\.','',cleaned)
     # remove sense ##, entry ##, (see ...) [MW words]
@@ -22,6 +20,8 @@ def clean_definition(definition):
     cleaned = re.sub(r'(?:[^.]*\.\s*)(Compare[^.]*\.)',r'\1',cleaned)
     # remove unnececessary spaces from the beginning and end after substitution
     cleaned = cleaned.lstrip(' ').rstrip(' ')
+    # remove unnecessary punctuation at the end of the definition [ALL]
+    cleaned = cleaned[-1] if cleaned.endswith((':','.')) else cleaned
     # now run every element through a spell checker
     blob = TextBlob(cleaned)
     # typecast correction to turn it from a BaseBlob object into a String
