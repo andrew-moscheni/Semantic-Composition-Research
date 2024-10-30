@@ -4,31 +4,31 @@ import re
 import os
 from textblob import TextBlob
 
+# function used in the apply method to streamline the code and avoid repetitive iterations through
+# the dataframe
 def clean_definition(definition):
-    cleaned = definition
     # remove unnecessary punctuation at the end of the file [ALL]
-    cleaned = s[-1] if s.endswith((':','.')) else s
+    cleaned = definition[-1] if definition.endswith((':','.')) else definition
     # removes any instance that is just 'Also called' [free]
     if cleaned == 'Also called':
         return ''
     # removes any instance of (= ) [Cambridge]
-    cleaned =  re.sub(r'\(=\w+\)','',s)
+    cleaned =  re.sub(r'\(=\w+\)','',cleaned)
     # removes one-word capitalized string list at beginning of a definition [Dict.com]
-    cleaned = re.sub(r'^ ([A-Z][a-zA-Z]*(, )?)+\.','',s)
+    cleaned = re.sub(r'^ ([A-Z][a-zA-Z]*(, )?)+\.','',cleaned)
     # remove sense ##, entry ##, (see ...) [MW words]
-    cleaned =  re.sub(r'sense \d+|entry \d+|\(see [\w\s]+\)','',s)
+    cleaned =  re.sub(r'sense \d+|entry \d+|\(see [\w\s]+\)','',cleaned)
     # Remove 'Compare ...' at the end of a definition after the definition [online API]
-    cleaned = re.sub(r'(?:[^.]*\.\s*)(Compare[^.]*\.)',r'\1',s)
+    cleaned = re.sub(r'(?:[^.]*\.\s*)(Compare[^.]*\.)',r'\1',cleaned)
     # remove unnececessary spaces from the beginning and end after substitution
     cleaned = cleaned.lstrip(' ').rstrip(' ')
     # now run every element through a spell checker
     blob = TextBlob(cleaned)
-    cleaned = b.correct()
+    # typecast correction to turn it from a BaseBlob object into a String
+    cleaned = str(b.correct())
 
     # return the value once it has been cleaned and corrected
     return cleaned
-
-
 
 # do a set of cleaning operations on ALL dictionaries to make cleaning more efficient
 print('Cleaning data...')
