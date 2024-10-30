@@ -1,4 +1,4 @@
-words,pos,dfns
+word,pos,dfns
 a,indefinite article, not any particular or certain one of a class or group:
 a,indefinite article, a certain; a particular:
 a,indefinite article, another; one typically resembling:
@@ -69,7 +69,7 @@ a-,N/A," variant of ad-, used: (1) before sc, sp, st ( ascend ) and (2) in words
 a,abbreviation for, are; ares.
 a-,N/A," variant of an- 1 before a consonant, meaning “not,” “without”:"
 Å,N/A, angstrom.
-a',adjective, all:
+a,adjective, all:
 A-,N/A, atomic (used in combination):
 abandon,verb (used with object), to leave completely and finally; forsake utterly; desert:
 abandon,verb (used with object), to give up; withdraw from; discontinue:
