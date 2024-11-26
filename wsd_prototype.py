@@ -13,19 +13,6 @@ from pywsd.lesk import adapted_lesk
 import torch
 import warnings
 
-'''
-nltk.download('omw-1.4')
-nltk.download('wordnet')
-nltk.download('wordnet2022')
-nlp = load('en_core_web_sm')
-
-POS_MAP = {
-    'VERB': wn.VERB,
-    'NOUN': wn.NOUN,
-    'PROPN': wn.NOUN
-}
-'''
-
 
 def wsd_and_pos_prototype(sent, word):
     # WSD using Adapted Lesk's algorithm (Banerjee & Pederson) [gives more accurate results]
