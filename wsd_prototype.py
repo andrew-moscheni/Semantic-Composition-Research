@@ -2,6 +2,8 @@ from nltk import wsd
 import pandas as pd
 import numpy as np
 import nltk
+import json
+import torch
 #nltk.download('averaged_perceptron_tagger')
 #nltk.download('punkt')
 #from nltk.corpus import wordnet as wn
@@ -56,29 +58,36 @@ def wsd_and_pos_prototype(sent, word, embedding_type='bert-base-uncased'):
     else:
         definition = definition.values[0]
     s=Sentence(sent)
-    definition = Sentence(definition)
+    s_definition = Sentence(definition)
     bert_embedding = TransformerWordEmbeddings('bert-base-uncased')
     bert_embedding.embed(s)
-    bert_embedding.embed(definition)
+    bert_embedding.embed(s_definition)
     index = 0
     for token in s:
         if token.text == word:
             break
         index=index+1
-    return definition, torch.stack([i.embedding for i in definition]), s[index].embedding, torch.stack([i.embedding for i in s])
+    return definition, torch.stack([i.embedding for i in s_definition]), s[index].embedding, torch.stack([i.embedding for i in s])
 
 with open('proto.txt', 'r') as file:
+    i=1
+    data={}
     for line in file:
         sent,word = line.strip().split('::')
         dfn,e_dfn,e_wrd,e_sent = wsd_and_pos_prototype(sent,word)
-        if dfn!=0:
-            print('SENT: {}'.format(sent))
-            print('WORD: {}'.format(word))
-            print('DFN: {}'.format(dfn))
-            print('WORD EMBEDDING: {}'.format(e_wrd.shape))
-            print('DEFINIITION EMBEDDING: {}'.format(e_dfn.shape))
-            print('SENTENCE EMBEDDING: {}'.format(e_sent.shape))
-            print('**********************************')
-        else:
-            print('DEFINITION OF WORD NOT FOUND')
-            print('**********************************')
+        if dfn==0:
+            print('definition not found')
+            break
+        if i>3: break
+        input_tag, output_tag = 'input'+str(i), 'output'+str(i)
+        data[input_tag]=line
+        data[output_tag]={
+            'definition':dfn,
+            'definition_embedding':e_dfn.tolist(),
+            'word_embedding':e_wrd.tolist(),
+            'sentence_embedding':e_sent.tolist()
+        }
+        i+=1
+    save_file = open('proto3.json','w')
+    json.dump(data,save_file,indent=5)
+    save_file.close()
