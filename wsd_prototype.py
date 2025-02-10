@@ -1,40 +1,15 @@
-from nltk import wsd
 import pandas as pd
 import numpy as np
 import nltk
-import json
 import torch
-#nltk.download('averaged_perceptron_tagger')
-#nltk.download('punkt')
-#from nltk.corpus import wordnet as wn
-#from spacy.cli import download
-#from spacy import load
 from flair.data import Sentence
+from sentence_transformers import SentenceTransformer
 from flair.embeddings import TransformerWordEmbeddings
-#from pywsd.lesk import adapted_lesk
-import torch
+
 import warnings
 
 
 def wsd_and_pos_prototype(sent, word, embedding_type='bert-base-uncased'):
-    '''
-    # WSD using Adapted Lesk's algorithm (Banerjee & Pederson) [gives more accurate results]
-    synset = adapted_lesk(sent, word)
-
-    # get embeddings for word and sentence using BERT (using flair library to do this)
-    s=Sentence(sent)
-    definition = Sentence(synset.definition())
-    bert_embedding = TransformerWordEmbeddings('bert-base-uncased')
-    bert_embedding.embed(s)
-    bert_embedding.embed(definition)
-    index = 0
-    for token in s:
-        if token.text == word:
-            break
-        index=index+1
-
-    return synset.definition(), torch.stack([i.embedding for i in definition]), synset.pos(), s[index].embedding, torch.stack([i.embedding for i in s])
-    '''
     # run the sentence through NLTK's POS tagger
     text = nltk.tokenize.word_tokenize(sent)
     poses = nltk.pos_tag(text)
@@ -42,6 +17,7 @@ def wsd_and_pos_prototype(sent, word, embedding_type='bert-base-uncased'):
     word,pos = [tup for tup in poses if tup[0]==word][0]
     # find the matching word and verb sense from the filtered MW definitions
     defs = pd.read_csv('./data_files/filtered_files/mw_words_filtered.csv')
+    # convert POS tags to words (so we can do filtering easier)
     if 'JJ' in pos:
         pos='adjective'
     elif 'NN' in pos:
@@ -51,43 +27,40 @@ def wsd_and_pos_prototype(sent, word, embedding_type='bert-base-uncased'):
     elif 'VB' in pos:
         pos='verb'
     else:
-        return 0,0,0,0
+        return []
+    # find definitions that match POS and word
     definition = defs.loc[(defs['word'] == word) & (defs['pos'] == pos), 'dfns']
     if len(definition) == 0:
-        return 0,0,0,0
+        return []
     else:
         definition = definition.values[0]
-    s=Sentence(sent)
-    s_definition = Sentence(definition)
-    bert_embedding = TransformerWordEmbeddings('bert-base-uncased')
-    bert_embedding.embed(s)
-    bert_embedding.embed(s_definition)
-    index = 0
-    for token in s:
-        if token.text == word:
-            break
-        index=index+1
-    return definition, torch.stack([i.embedding for i in s_definition]), s[index].embedding, torch.stack([i.embedding for i in s])
+    # use the intfloat/e5-large-v2 model since it performed best on MTEB
+    model = SentenceTransformer('intfloat/e5-large-v2')
+    word_embed = TransformerWordEmbeddings(embedding_type)
 
-with open('proto.txt', 'r') as file:
-    i=1
-    data={}
-    for line in file:
-        sent,word = line.strip().split('::')
-        dfn,e_dfn,e_wrd,e_sent = wsd_and_pos_prototype(sent,word)
-        if dfn==0:
-            print('definition not found')
-            break
-        if i>3: break
-        input_tag, output_tag = 'input'+str(i), 'output'+str(i)
-        data[input_tag]=line
-        data[output_tag]={
-            'definition':dfn,
-            'definition_embedding':e_dfn.tolist(),
-            'word_embedding':e_wrd.tolist(),
-            'sentence_embedding':e_sent.tolist()
-        }
-        i+=1
-    save_file = open('proto3.json','w')
-    json.dump(data,save_file,indent=5)
-    save_file.close()
+    # get all the embeddings from the Transformers
+    e_wrd = torch.tensor(word_embed.embed(Sentence(word)))
+    e_sent = torch.tensor(model.encode(Sentence(sent)))
+    e_dfn = torch.tensor(model.encode(Sentence(definition)))
+    return e_dfn, e_wrd, e_sent
+
+# list embedding types here
+embedding_types = []
+samp_sent = pd.read_csv('./cambridge_sample_sentences.csv')
+for embed_type in embedding_types:
+    e_words, e_dfns, diffs = [], [], [] # empty lists to become dataframes
+    for _,row in samp_sent.iterrows():
+        tup = wsd_and_pos_prototype(row['sentence'],row['word'],embed_type)
+        if tup == []: # check if definitions exist
+            e_dfn,e_wrd,_ = tup
+        e_words.append(e_wrd)
+        e_dfns.append(e_dfn)
+        diffs.append(e_dfn-e_wrd)
+    # format as definitions
+    df = pd.DataFrame({
+        'e_wrd': e_words,
+        'e_def': e_dfns,
+        'e_def-e_wrd': diffs
+    })
+    # create the file only if it does not exist
+    df.to_csv(f'./diff_model_csvs/{embed_type}.csv', index=False, mode='x')
