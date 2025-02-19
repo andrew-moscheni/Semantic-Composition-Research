@@ -67,8 +67,8 @@ def wsd_and_pos_prototype(sent, word, model):
     return e_dfn, e_wrd, e_sent
 
 # embeddings and file names
-embedding_types = ['sentence-transformers/all-mpnet-base-v2', 'sentence-transformers/stsb-roberta-large', 'intfloat/e5-large-v2', 'facebook/bart-large']
-names = ['all-mpnet', 'roberta-large', 'intfloat-e5', 'facebook-bart']
+embedding_types = ['sentence-transformers/stsb-roberta-large', 'intfloat/e5-large-v2', 'facebook/bart-large']
+names = ['roberta-large', 'intfloat-e5', 'facebook-bart']
 samp_sent = pd.read_csv('./cambridge_sample_sentences.csv')
 curr_letter = 'z'
 
@@ -88,9 +88,9 @@ for (embed_type, name) in zip(embedding_types, names):
         if not tup: # check if definitions exist
             continue
         e_dfn,e_wrd,_ = tup
-        e_words.append(e_wrd)
-        e_dfns.append(e_dfn)
-        diffs.append(e_dfn-e_wrd)
+        e_words.append([t.item() for t in e_wrd])
+        e_dfns.append([t.item() for t in e_dfn])
+        diffs.append([t.item() for t in (e_dfn-e_wrd)])
     # format as definitions
     df = pd.DataFrame({
         'e_wrd': e_words,
@@ -98,5 +98,5 @@ for (embed_type, name) in zip(embedding_types, names):
         'e_def-e_wrd': diffs
     })
     # create the file only if it does not exist
-    df.to_csv(f'./diff_model_csvs/{name}.csv', index=False, mode='x')
+    df.to_csv(f'./{name}.csv', index=False, mode='x')
     print(f'finished running embedding type: {embed_type}')
