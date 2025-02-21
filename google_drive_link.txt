@@ -1,0 +1,10 @@
+Google Drive Link:
+https://drive.google.com/drive/folders/1ov7qgF3gQnQcxZFTnwwW567-cSZg8grX?usp=drive_link
+
+Contains:
+roberta-large.csv (CSV for STS-Roberta model [1.5 GB])
+plot_script.ipynb (Google Colab link for the plots and code [467 KB])
+model_desc.txt (txt file for description of model CSVs [687 bytes])
+intfloat-e5.csv (CSV for intfloat/e5-large-v2 model [1.6 GB])
+facebook-bart.csv (CSV for Facebook's BART model [1.51 GB])
+all-mpnet.csv (CSV for all-mpnet-base model [1.01 GB])
